@@ -1,8 +1,10 @@
 from sqlalchemy.orm import Session
 
-from app.repositories.weather_repository import WeatherRepository
-from app.services.weather_collector import WeatherCollectorService
-from app.schemas.weather_response import WeatherResponse
+from app.repositories import WeatherRepository
+from app.services import WeatherCollectorService
+from app.schemas import WeatherResponse
+from app.utils import convert_temperature
+
 
 class WeatherOrchestratorService:
     """
@@ -29,6 +31,35 @@ class WeatherOrchestratorService:
         new_record = self.repository.create(weather_data_dto)
         return new_record
 
-    def get_history(self, city: str = None, limit: int = 20):
-        """Business Logic: Only retrieve data."""
-        return self.repository.get_recent_history(city=city, limit=limit)
+    def get_history(self, city: str = None, limit: int = 20, unit: str = "C"):
+        """
+        Business Logic:
+        1. Retrieve recent history from the database.
+        2. Convert temperatures to the desired unit on-the-fly.
+        """
+        records = self.repository.get_recent_history(city=city, limit=limit)
+        
+        # Apply conversion on-the-fly
+        for record in records:
+            record.temperature = convert_temperature(record.temperature, unit)
+            record.feels_like = convert_temperature(record.feels_like, unit)
+        
+        return records
+
+    def get_city_analytics(self, city: str, unit: str = "C"):
+        """
+        Business Logic:
+        1. Retrieve city analytics from the database.
+        2. Convert aggregated temperatures to the desired unit.
+        """
+        stats = self.repository.get_city_stats(city)
+        if not stats:
+            return None
+        
+        # Convert aggregated values to the desired unit
+        stats["average_temp"] = convert_temperature(stats["average_temp"], unit)
+        stats["max_temp"] = convert_temperature(stats["max_temp"], unit)
+        stats["min_temp"] = convert_temperature(stats["min_temp"], unit)
+        stats["unit"] = unit.upper()
+        
+        return stats
