@@ -1,8 +1,10 @@
+from pydantic import Field
 from .weather_base import WeatherBase
-
 
 class WeatherRequest(WeatherBase):
     """
-    Data object for incoming weather data.
+    Pydantic model for incoming weather data.
     """
-    pass
+    humidity: int = Field(..., description="Relative humidity percentage", example=80)
+    pressure: int = Field(..., description="Atmospheric pressure in hPa", example=1013)
+    visibility: int = Field(..., description="Visibility in meters", example=10000)

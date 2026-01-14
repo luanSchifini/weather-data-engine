@@ -66,9 +66,15 @@ class WeatherCollectorService:
 
             return WeatherRequest(
                 city=city_geolocation.name,
+                country=city_geolocation.country,
+                lat=city_geolocation.lat,
+                lon=city_geolocation.lon,
+                description=data["weather"][0]["description"],
                 temperature=data["main"]["temp"],
+                feels_like=data["main"]["feels_like"],
                 humidity=data["main"]["humidity"],
-                description=data["weather"][0]["description"]
+                pressure=data["main"]["pressure"],
+                visibility=data.get("visibility", 10000),
             )
         except requests.RequestException as e:
             logger.error(f"Weather API error: {e}")

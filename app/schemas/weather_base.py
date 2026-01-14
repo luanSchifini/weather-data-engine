@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel, Field
 
 
@@ -6,6 +7,9 @@ class WeatherBase(BaseModel):
     Core Weather data model, shared across requests and responses.
     """
     city: str = Field(..., description="City name", example="Florianópolis")
-    temperature: float = Field(..., description="Temperature in Celsius", example=25.5)
-    humidity: int = Field(..., description="Relative humidity percentage", example=80)
+    country: str = Field(..., description="Country name", example="Brazil")
+    lat: float = Field(..., description="Latitude", example=-27.6037)
+    lon: float = Field(..., description="Longitude", example=-48.5772)
     description: str = Field(..., description="Weather description (PT-BR)", example="céu limpo")
+    temperature: float = Field(..., description="Temperature in Celsius", example=25.5)
+    feels_like: float = Field(..., description="Feels like temperature in Celsius", example=26.5)

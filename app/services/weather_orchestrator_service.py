@@ -26,10 +26,9 @@ class WeatherOrchestratorService:
         weather_data_dto = self.collector.execute_collection(city_name)
 
         # Persistence - Internal
-        new_record = self.repository.create_weather_record(weather_data_dto)
-
+        new_record = self.repository.create(weather_data_dto)
         return new_record
 
-    def get_history(self, limit: int = 20):
+    def get_history(self, city: str = None, limit: int = 20):
         """Business Logic: Only retrieve data."""
-        return self.repository.get_recent_history(limit)
+        return self.repository.get_recent_history(city=city, limit=limit)
