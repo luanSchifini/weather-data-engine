@@ -18,19 +18,7 @@ class WeatherRepository:
         """
         Creates a new weather record in the database.
         """
-        new_weather_record = WeatherRecord(
-            city=weather_data.city,
-            country=weather_data.country,
-            lat=weather_data.lat,
-            lon=weather_data.lon,
-            description=weather_data.description,
-            temperature=weather_data.temperature,
-            feels_like=weather_data.feels_like,
-            humidity=weather_data.humidity,
-            pressure=weather_data.pressure,
-            visibility=weather_data.visibility
-        )
-
+        new_weather_record = WeatherRecord(**weather_data.model_dump())
         self.db.add(new_weather_record)
         self.db.commit()
         self.db.refresh(new_weather_record)

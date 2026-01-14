@@ -9,6 +9,9 @@ class WeatherResponse(WeatherBase):
     Data object for outgoing weather data.
     """
     id: UUID = Field(..., description="Unique identifier for the weather data")
+    humidity: int = Field(..., description="Relative humidity percentage", example=80)
+    pressure: int = Field(..., description="Atmospheric pressure in hPa", example=1013)
+    visibility: int = Field(..., description="Visibility in meters", example=10000)
     created_at: datetime = Field(..., description="Timestamp of data collection")
 
     class Config:

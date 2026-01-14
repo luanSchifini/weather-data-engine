@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.config import logger
 from app.schemas.weather_response import WeatherResponse
 from app.schemas.weather_request import WeatherRequest
 from app.repositories.weather_repository import WeatherRepository
@@ -58,7 +59,3 @@ def get_weather_record(weather_id: UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Weather record not found")
     
     return weather_record
-
-
-
-
