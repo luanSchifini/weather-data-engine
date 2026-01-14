@@ -6,7 +6,7 @@ from .weather_base import WeatherBase
 
 class WeatherResponse(WeatherBase):
     """
-    Data object for outgoing weather data.
+    Pydantic model for outgoing weather data.
     """
     id: UUID = Field(..., description="Unique identifier for the weather data")
     humidity: int = Field(..., description="Relative humidity percentage", example=80)

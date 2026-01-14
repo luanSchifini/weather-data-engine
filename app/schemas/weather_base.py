@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 class WeatherBase(BaseModel):
     """
-    Core Weather data model, shared across requests and responses.
+    Pydantic model for core Weather data, shared across requests and responses.
     """
     city: str = Field(..., description="City name", example="Florianópolis")
     country: str = Field(..., description="Country name", example="Brazil")
