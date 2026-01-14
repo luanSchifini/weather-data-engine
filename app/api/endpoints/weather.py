@@ -1,22 +1,15 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.config import logger
 from app.database import get_db
 from app.schemas.weather_response import WeatherResponse
-from app.services.weather_collector import WeatherCollectorService
-from app.services.weather_repository import WeatherRepository
+from app.services.weather_orchestrator_service import WeatherOrchestratorService
 
 router = APIRouter()
 
 
-@router.post(
-    "/weather/collect/{city_name}",
-    response_model=WeatherResponse,
-    status_code=status.HTTP_201_CREATED,
-    tags=["Weather"]
-)
+@router.post("/collect/{city_name}", response_model=WeatherResponse, status_code=status.HTTP_201_CREATED)
 def collect_weather_data(city_name: str, db: Session = Depends(get_db)):
     """
     Activate the weather data collection pipeline:
@@ -24,26 +17,14 @@ def collect_weather_data(city_name: str, db: Session = Depends(get_db)):
     2. Weather API (Actual Weather)
     3. Persistence (PostgreSQL)
     """
-    try:
-        collector = WeatherCollectorService()
-        weather_data = collector.execute_collection(city_name)
-        
-        repository = WeatherRepository(db)
-        record = repository.create_weather_record(weather_data)
-        
-        return record
-    except Exception as e:
-        logger.error(f"Unexpected error processing {city_name}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail="An unexpected error occurred while processing the request."
-        )
+    weather_service = WeatherOrchestratorService(db)
+    return weather_service.process_new_collection(city_name)
 
 
-@router.get("/weather/history", response_model=List[WeatherResponse], tags=["Weather"])
+@router.get("/history", response_model=List[WeatherResponse])
 def get_weather_history(limit: int = 20, db: Session = Depends(get_db)):
     """
     Returns the history of the last collections made to the database.
     """
-    repository = WeatherRepository(db)
-    return repository.get_recent_history(limit=limit)
+    weather_service = WeatherOrchestratorService(db)
+    return weather_service.get_history(limit=limit)
