@@ -1,50 +1,22 @@
+import os
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.main import app
-from app.database import Base, get_db
 
-# Memory database for tests
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def setup_database():
-    """Create tables at the start of the test session and drop them at the end."""
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
+# CRITICAL: Set this BEFORE importing app to prevent PostgreSQL connection attempt
+# The app.database module tries to connect at import time, so we need a valid DB URL
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
 
 @pytest.fixture
-def db_session():
-    """Provide a clean database session for each test."""
-    connection = engine.connect()
-    transaction = connection.begin()
-    session = TestingSessionLocal(bind=connection)
+def client():
+    """
+    Provide a FastAPI TestClient for API testing.
     
-    yield session
+    Note: We set DATABASE_URL to SQLite in-memory above to prevent the app
+    from trying to connect to PostgreSQL during import. Since all tests mock
+    services/repositories, the database is never actually used.
+    """
+    from app.main import app
     
-    session.close()
-    transaction.rollback()
-    connection.close()
-
-
-@pytest.fixture
-def client(db_session):
-    """Override the get_db dependency to use the test session."""
-    def override_get_db():
-        try:
-            yield db_session
-        finally:
-            pass
-    
-    app.dependency_overrides[get_db] = override_get_db
-
-    with TestClient(app=app, base_url="http://test") as c:
-        yield c
-
-    app.dependency_overrides.clear()
+    with TestClient(app=app, base_url="http://test") as test_client:
+        yield test_client
