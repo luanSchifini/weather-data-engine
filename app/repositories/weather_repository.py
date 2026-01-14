@@ -1,3 +1,5 @@
+from app.config import logger
+from uuid import UUID
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from app.models.weather_record import WeatherRecord
@@ -11,15 +13,22 @@ class WeatherRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_weather_record(self, weather_data: WeatherRequest) -> WeatherRecord:
+
+    def create(self, weather_data: WeatherRequest) -> WeatherRecord:
         """
         Creates a new weather record in the database.
         """
         new_weather_record = WeatherRecord(
             city=weather_data.city,
+            country=weather_data.country,
+            lat=weather_data.lat,
+            lon=weather_data.lon,
+            description=weather_data.description,
             temperature=weather_data.temperature,
+            feels_like=weather_data.feels_like,
             humidity=weather_data.humidity,
-            description=weather_data.description
+            pressure=weather_data.pressure,
+            visibility=weather_data.visibility
         )
 
         self.db.add(new_weather_record)
@@ -28,13 +37,46 @@ class WeatherRepository:
 
         return new_weather_record
 
-    def get_recent_history(self, limit: int = 20) -> list[WeatherRecord]:
+
+    def delete(self, weather_id: UUID) -> WeatherRecord:
+        """
+        Deletes an existing weather record in the database.
+        """
+        weather_record = self.db.query(WeatherRecord).filter(WeatherRecord.id == weather_id).first()
+        if not weather_record:
+            logger.error(f"DeleteWeatherRecordRepository: Weather record not found for id: {weather_id}")
+            return None
+
+        self.db.delete(weather_record)
+        self.db.commit()
+
+        return weather_record
+
+
+    def get(self, weather_id: UUID) -> WeatherRecord:
+        """
+        Returns an existing weather record from the database.
+        """
+        weather_record = self.db.query(WeatherRecord).filter(WeatherRecord.id == weather_id).first()
+        if not weather_record:
+            logger.error(f"GetWeatherRecordRepository: Weather record not found for id: {weather_id}")
+            return None
+
+        return weather_record
+
+
+    def get_recent_history(self, city: str = None, limit: int = 20) -> list[WeatherRecord]:
         """
         Returns the history of the last collections made to the database, sorted by creation date.
         The default limit is 20.
         """
+        query = self.db.query(WeatherRecord)
+
+        if city:
+            query = query.filter(WeatherRecord.city.ilike(city))
+
         return (
-            self.db.query(WeatherRecord)
+            query
             .order_by(desc(WeatherRecord.created_at))
             .limit(limit)
             .all()
